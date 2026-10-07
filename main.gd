@@ -13,7 +13,11 @@ func _physics_process(delta: float) -> void:
 	window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
 	window_position.y = clamp(window_position.y, 0, screen_size.y - window_size.y)
 	DisplayServer.window_set_position (Vector2(window_position))
-
+	
+	if (window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x):
+		direction.x *= -1
+	if (window_position.y <= 0 or window_position.y <= screen_size.y - window_size.y):
+		direction.y *= -1
 
 func _ready() -> void:
 	screen_size = Vector2(DisplayServer.screen_get_size())
