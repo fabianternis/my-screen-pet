@@ -75,7 +75,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk",
-"speed": 4.0
+"speed": 7.5
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
@@ -87,7 +87,7 @@ script = ExtResource("1_1bvp3")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1882347918]
 position = Vector2(101, 180)
 sprite_frames = SubResource("SpriteFrames_nth25")
-animation = &"down_up"
+animation = &"walk"
 
 [node name="Area2D" type="Area2D" parent="." unique_id=547308985]
 position = Vector2(99, 177)
