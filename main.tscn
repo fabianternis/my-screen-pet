@@ -4,9 +4,39 @@
 [ext_resource type="Texture2D" uid="uid://cs4oo2gh13qkc" path="res://assets/pet/simpli/idle_0.png" id="1_ig7tw"]
 [ext_resource type="Texture2D" uid="uid://cg3tdxqfmawvs" path="res://assets/pet/simpli/idle_1.png" id="2_h2yge"]
 [ext_resource type="Texture2D" uid="uid://btqvdjlmreyhk" path="res://assets/pet/simpli/idle_2.png" id="3_1bvp3"]
+[ext_resource type="Texture2D" uid="uid://eh7r68u0gm5o" path="res://assets/pet/simpli/down_front.png" id="3_5vw27"]
+[ext_resource type="Texture2D" uid="uid://dnch3tol27b61" path="res://assets/pet/simpli/down_full.png" id="4_kek77"]
+[ext_resource type="Texture2D" uid="uid://c5t4irlydq46q" path="res://assets/pet/simpli/walk_inner.png" id="5_7mycd"]
+[ext_resource type="Texture2D" uid="uid://d238tnenkyjno" path="res://assets/pet/simpli/walk_outer.png" id="6_272bh"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_nth25"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_ig7tw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_5vw27")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_5vw27")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_ig7tw")
+}],
+"loop": 1,
+"name": &"down_up",
+"speed": 2.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("1_ig7tw")
@@ -29,6 +59,23 @@ animations = [{
 "loop": 1,
 "name": &"idle",
 "speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_7mycd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_ig7tw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_272bh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_ig7tw")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 4.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
@@ -40,7 +87,7 @@ script = ExtResource("1_1bvp3")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1882347918]
 position = Vector2(101, 180)
 sprite_frames = SubResource("SpriteFrames_nth25")
-animation = &"idle"
+animation = &"down_up"
 
 [node name="Area2D" type="Area2D" parent="." unique_id=547308985]
 position = Vector2(99, 177)
