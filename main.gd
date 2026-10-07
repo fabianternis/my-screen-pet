@@ -1,8 +1,8 @@
 extends Node2D
 
-var default_speed = 200
+var default_speed = 100
 var speed = default_speed
-var direction = Vector2(1,0)
+var direction = Vector2(2,1)
 var screen_size = Vector2()
 var window_size = Vector2(200, 200)
 
