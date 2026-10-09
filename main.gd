@@ -2,7 +2,7 @@ extends Node2D
 
 var default_speed = 100
 var speed = default_speed
-var direction = Vector2(2,1)
+var direction = Vector2(0, 1)
 var screen_size = Vector2()
 var window_size = Vector2(200, 200)
 
@@ -26,12 +26,12 @@ func _physics_process(delta: float) -> void:
 			animated_sprite.play('walk')
 		return
 	
-	if (window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x):
+	if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
 		direction.x *= -1
 		maybe_idle()
 		animated_sprite.flip_h = !animated_sprite.flip_h
 		maybe_idle()
-	if (window_position.y <= 0 or window_position.y <= screen_size.y - window_size.y):
+	if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
 		direction.y *= -1
 		maybe_idle()
 
