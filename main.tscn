@@ -91,10 +91,13 @@ animations = [{
 size = Vector2(105, 68)
 
 [node name="Node2D" type="Node2D" unique_id=1802095796]
+position = Vector2(-55.999992, -139)
+scale = Vector2(1.7, 1.7)
 script = ExtResource("1_1bvp3")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1882347918]
-position = Vector2(101, 180)
+position = Vector2(91.17646, 184.11765)
+scale = Vector2(0.9111765, 0.91823524)
 sprite_frames = SubResource("SpriteFrames_nth25")
 animation = &"drag"
 
