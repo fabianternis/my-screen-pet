@@ -1,5 +1,5 @@
 extends Node2D
-
+"""
 var default_speed = 100
 var speed = default_speed
 var direction = Vector2(1.3, 1.1)
@@ -75,8 +75,30 @@ func _on_area_input(_viewport, event, _shape_idx):
 		else:
 			is_dragging = false
 			animated_sprite.play('walk')
-			
 
 
 
 # todo: pet which just follow the cursor
+
+"""
+
+# ----- REWORK -----
+
+# Base variables
+var is_idle = false
+var idle_time_left = 0.0
+var is_dragging = false
+var drag_offset = Vector2()
+var is_paused = false
+var pause_action_time = 7.0
+var pause_time_since_last = 0.0
+
+var default_speed = 100
+var direction = Vector2(1.3, 0.4)
+var size_screen = Vector2()
+var size_window = Vector2(DisplayServer.window_get_size())
+
+
+
+
+#"""
