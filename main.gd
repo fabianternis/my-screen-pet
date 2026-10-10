@@ -109,7 +109,7 @@ var menu = 'default'
 @onready var sprite = $AnimatedSprite2D
 @onready var area = $Area2D
 @onready var popup = $PopupMenu
-@onready var popup_paused = $PausedMenu
+#@onready var popup_paused = $PausedMenu
 
 
 func _ready():
@@ -118,14 +118,14 @@ func _ready():
 	current_primary_animation = 'walk'
 	sprite.play(current_primary_animation)
 	#popup.add_item('hi', 0)
-	popup.add_item('pause', 0)
+	popup.add_item('(un) pause', 0)
 	#popup_paused.add_item('un pause', 0)
 	#popup_paused.add_item('continue', 0)
-	popup_paused.add_item('resume', 0)
+	#popup_paused.add_item('resume', 0)
 	
 	area.input_event.connect(_on_area_input)
 	popup.id_pressed.connect(_on_item_press)
-	popup_paused.id_pressed.connect(_on_pause_item_press)
+	#popup_paused.id_pressed.connect(_on_pause_item_press)
 
 
 func _on_area_input(_viewport, event, _shape_idx):
@@ -141,12 +141,14 @@ func _on_area_input(_viewport, event, _shape_idx):
 			sprite.play(current_primary_animation)
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if event.pressed:
-			if is_paused:
-				menu = 'pause'
-				popup_paused.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
-			else:
-				menu = 'default'
-				popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
+			#if is_paused:
+				#menu = 'pause'
+			#	popup.add_item('resume', 0)
+			#	popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
+			#else:
+				#menu = 'default'
+			#	popup.add_item('pause', 0)
+			popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
 			
 			
 #func _on_item_press(id, menu = 'default'):
@@ -154,14 +156,14 @@ func _on_item_press(id):
 	#if menu == 'default':
 	if id == 0:
 	#	print('Hello World!')
-		is_paused = true
-		current_primary_animation = 'pause'
-		sprite.play(current_primary_animation)
-func _on_pause_item_press(id):
-	#elif menu == 'pause':
-	if id == 0:
-		is_paused = false
-		current_primary_animation = 'walk'
-		sprite.play(current_primary_animation)
+		if is_paused:
+			is_paused = false
+			current_primary_animation = 'walk'
+			sprite.play(current_primary_animation)
+		else:
+			is_paused = true
+			current_primary_animation = 'pause'
+			sprite.play(current_primary_animation)
+			
 		
 #"""
