@@ -131,3 +131,8 @@ shape = SubResource("RectangleShape2D_h2yge")
 oversampling_override = 1.0
 visible = true
 submenu_popup_delay = 0.321
+
+[node name="PausedMenu" type="PopupMenu" parent="." unique_id=1910493333]
+oversampling_override = 1.0
+visible = true
+submenu_popup_delay = 0.321
