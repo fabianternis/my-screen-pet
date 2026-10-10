@@ -92,13 +92,56 @@ var drag_offset = Vector2()
 var is_paused = false
 var pause_action_time = 7.0
 var pause_time_since_last = 0.0
+var is_following_mouse = false
 
 var default_speed = 100
 var direction = Vector2(1.3, 0.4)
 var size_screen = Vector2()
 var size_window = Vector2(DisplayServer.window_get_size())
 
+var current_primary_animation = 'idle'
 
 
+#var current_press_action = 'drag'
+#var drag_min_time_sec = 0.3
 
+@onready var sprite = $AnimatedSprite2D
+@onready var area = $Area2D
+@onready var popup = $PopupMenu
+
+
+func _ready():
+	size_screen = Vector2(DisplayServer.screen_get_size())
+	
+	current_primary_animation = 'walk'
+	sprite.play(current_primary_animation)
+	#popup.add_item('hi', 0)
+	popup.add_item('pause', 0)
+	
+	area.input_event.connect(_on_area_input)
+	popup.id_pressed.connect(_on_item_press)
+
+
+func _on_area_input(_viewport, event, _shape_idx):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			is_dragging = true
+			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
+			var window_pos = Vector2(DisplayServer.window_get_position())
+			drag_offset = mouse_pos - window_pos
+			sprite.play('drag')
+		else:
+			is_dragging = false
+			sprite.play(current_primary_animation)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
+			
+			
+func _on_item_press(id):
+	if id == 0:
+	#	print('Hello World!')
+		is_paused = true
+		current_primary_animation = 'pause'
+		sprite.play(current_primary_animation)
 #"""

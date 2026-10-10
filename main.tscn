@@ -71,6 +71,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": ExtResource("3_5vw27")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_kek77")
+}],
+"loop": 1,
+"name": &"pause",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": ExtResource("5_7mycd")
 }, {
 "duration": 1.0,
@@ -99,7 +116,9 @@ script = ExtResource("1_1bvp3")
 position = Vector2(91.17646, 184.11765)
 scale = Vector2(0.9111765, 0.91823524)
 sprite_frames = SubResource("SpriteFrames_nth25")
-animation = &"drag"
+animation = &"pause"
+frame = 1
+frame_progress = 0.90269685
 
 [node name="Area2D" type="Area2D" parent="." unique_id=547308985]
 position = Vector2(99, 177)
@@ -107,3 +126,8 @@ position = Vector2(99, 177)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1971320253]
 position = Vector2(-8.5, -11)
 shape = SubResource("RectangleShape2D_h2yge")
+
+[node name="PopupMenu" type="PopupMenu" parent="." unique_id=959510675]
+oversampling_override = 1.0
+visible = true
+submenu_popup_delay = 0.321
