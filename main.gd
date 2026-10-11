@@ -102,12 +102,17 @@ var size_window = Vector2(DisplayServer.window_get_size())
 var current_primary_animation = 'idle'
 var menu = 'default'
 
+#var default_speed = 300
+var speed = default_speed
+
+#var direction = Vector2(x: 1.15, y: 0.7)
 
 #var current_press_action = 'drag'
 #var drag_min_time_sec = 0.3
 
 @onready var sprite = $AnimatedSprite2D
 @onready var area = $Area2D
+#@onready var shape = $Area2D/CollisionShape2D
 @onready var popup = $PopupMenu
 #@onready var popup_paused = $PausedMenu
 
@@ -122,10 +127,15 @@ func _ready():
 	#popup_paused.add_item('un pause', 0)
 	#popup_paused.add_item('continue', 0)
 	#popup_paused.add_item('resume', 0)
+	popup.add_item('change direction', 1)
+
 	
 	area.input_event.connect(_on_area_input)
 	popup.id_pressed.connect(_on_item_press)
 	#popup_paused.id_pressed.connect(_on_pause_item_press)
+	
+	#print (size_screen)
+	#print (size_window)
 
 
 func _on_area_input(_viewport, event, _shape_idx):
@@ -164,6 +174,38 @@ func _on_item_press(id):
 			is_paused = true
 			current_primary_animation = 'pause'
 			sprite.play(current_primary_animation)
-			
+	if id == 1:
+		switch_direction()
 		
+		
+func _process(delta: float):
+	var window_position = Vector2(DisplayServer.window_get_position())
+	window_position += direction * speed * delta
+	
+	window_position.x = clamp(window_position.x, 0, size_screen.x - size_window.x)
+	window_position.y = clamp(window_position.y, 0, size_screen.y - size_window.y)
+	DisplayServer.window_set_position (Vector2(window_position))
+	if is_dragging:
+		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
+		var new_window_pos = mouse_pos - drag_offset
+		DisplayServer.window_set_position(Vector2(new_window_pos))
+		return
+	if is_idle:
+		idle_time_left -= delta
+		if idle_time_left <= 0:
+			is_idle = false
+			speed = default_speed
+			sprite.play('walk')
+		return
+		
+	
+	if window_position.x <= 0 or window_position.x >= size_screen.x - size_window.x:
+		switch_direction()
+	if window_position.y <= 0 or window_position.y >= size_screen.y - size_window.y:
+		direction.y *= -1
+
+
+func switch_direction():
+	direction.x *= -1
+	sprite.flip_h = !sprite.flip_h
 #"""
