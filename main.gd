@@ -1,68 +1,77 @@
 extends Node2D
 
-var default_speed = 100
-var speed = default_speed
-var direction = Vector2(1.3, 1.1)
-var screen_size = Vector2()
-var window_size = Vector2(200, 200)
-
-# Ideling variables
-var is_idling = false
-var idle_timer = 0.0
-
-# Fragging variables
+# Base variables
+var is_idle = false
+var idle_time_left = 0.0
 var is_dragging = false
 var drag_offset = Vector2()
+var is_paused = false
+var pause_action_time = 7.0
+var pause_time_since_last = 0.0 #not (yet) in use
+var is_following_mouse = false #not in use
+var mouse_position = Vector2()
+var can_move_y = true
 
-@onready var animated_sprite = $AnimatedSprite2D
+var default_speed = 200
+var initial_direction = Vector2(1, 1)
+#var direction = Vector2(1.3, 0.4)
+var direction = initial_direction
+var size_screen = Vector2()
+#var size_window = Vector2(DisplayServer.window_get_size())
+var size_window = Vector2(200, 200)
+
+var current_primary_animation = 'idle'
+var menu = 'default' # unused
+
+#var default_speed = 300
+var speed = default_speed
+
+var drag_pos_0 = Vector2(0.0, 0.0)
+var drag_pos_1 = Vector2(0.0, 0.0)
+var default_drag_pos = Vector2(0.0, 0.0) # i may use this later (when i finally clean-up) - this may never happen
+
+
+var other_window_pos_tofix: Vector2 = Vector2.ZERO
+var can_idle = true # not used yet
+
+
+#var direction = Vector2(x: 1.15, y: 0.7)
+
+#var current_press_action = 'drag'
+#var drag_min_time_sec = 0.3
+
+@onready var sprite = $AnimatedSprite2D
 @onready var area = $Area2D
+#@onready var shape = $Area2D/CollisionShape2D
+@onready var popup = $PopupMenu
+#@onready var popup_paused = $PausedMenu
 
-func _physics_process(delta: float) -> void:
-	var window_position = Vector2(DisplayServer.window_get_position())
-	window_position += direction * speed * delta
-	#print (window_position)
-	window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
-	window_position.y = clamp(window_position.y, 0, screen_size.y - window_size.y)
-	DisplayServer.window_set_position (Vector2(window_position))
-	if is_dragging:
-		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
-		var new_window_pos = mouse_pos - drag_offset
-		DisplayServer.window_set_position(Vector2(new_window_pos))
-		return
-	if is_idling:
-		idle_timer -= delta
-		if idle_timer <= 0:
-			is_idling = false
-			speed = default_speed
-			animated_sprite.play('walk')
-		return
+
+func _ready():
+	size_screen = Vector2(DisplayServer.screen_get_size())
+	#size_window = Vector2(DisplayServer.window_get_size())
+	DisplayServer.window_set_size(Vector2i(size_window))
 	
-	if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
-		direction.x *= -1
-		maybe_idle()
-		animated_sprite.flip_h = !animated_sprite.flip_h
-		maybe_idle()
-	if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
-		direction.y *= -1
-		maybe_idle()
+	current_primary_animation = 'walk'
+	sprite.play(current_primary_animation)
+	#popup.add_item('hi', 0)
+	popup.add_item('(un) pause', 0)
+	#popup_paused.add_item('un pause', 0)
+	#popup_paused.add_item('continue', 0)
+	#popup_paused.add_item('resume', 0)
+	popup.add_item('change direction', 1)
+	popup.add_item('toggle y-move', 2)
 
-func _ready() -> void:
-	screen_size = Vector2(DisplayServer.screen_get_size())
-	animated_sprite.play("walk")
+	
 	area.input_event.connect(_on_area_input)
-
-
-func idle():
-	idle_timer = randf_range(1.0, 3.0)
-	is_idling = true
+	popup.id_pressed.connect(_on_item_press)
+	#popup_paused.id_pressed.connect(_on_pause_item_press)
 	
-	if (randi() % 3) == 0:
-		animated_sprite.play('idle')
-		speed = 0
-		
-func maybe_idle():
-	if randf() < 0.23456:
-		idle()
+	##print (size_screen)
+	##print (size_window)
+	
+	other_window_pos_tofix = Vector2(DisplayServer.window_get_position())
+
 
 func _on_area_input(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -71,12 +80,187 @@ func _on_area_input(_viewport, event, _shape_idx):
 			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 			var window_pos = Vector2(DisplayServer.window_get_position())
 			drag_offset = mouse_pos - window_pos
-			animated_sprite.play('drag')
+			if !is_paused: sprite.play('drag') # dot _animation() for a reason: should remember the animation pre-drag
 		else:
-			is_dragging = false
-			animated_sprite.play('walk')
+			reset_drag()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			#if is_paused:
+				#menu = 'pause'
+			#	popup.add_item('resume', 0)
+			#	popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
+			#else:
+				#menu = 'default'
+			#	popup.add_item('pause', 0)
+			if !is_paused:
+				idle(3)
+			popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
 			
+			
+#func _on_item_press(id, menu = 'default'):
+func _on_item_press(id):
+	#if menu == 'default':
+	if id == 0:
+	#	#print('Hello World!')
+		if is_paused:
+			is_paused = false
+			#current_primary_animation = 'walk'
+			#sprite.play(current_primary_animation)
+			_animation('walk')
+		else:
+			is_paused = true
+			#current_primary_animation = 'pause'
+			#sprite.play(current_primary_animation)
+			_animation('pause')
+	if id == 1:
+		#print('HERE 1234')
+		switch_direction("x")
+	if id == 2:
+		can_move_y = !can_move_y
+		if not can_move_y:
+			direction.y = 0.0
+			
+			other_window_pos_tofix.y = size_screen.y - size_window.y
+			DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
+		else:
+			direction.y = initial_direction.y
+	stop_idle()
+		
+		
+func _process(delta: float):
+	if is_dragging:
+		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
+		#var new_window_pos = mouse_pos - drag_offset
+		#DisplayServer.window_set_position(Vector2(new_window_pos))
+		other_window_pos_tofix = mouse_pos - drag_offset
+		DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
+		drag_pos_1 = drag_pos_0
+		drag_pos_0 = mouse_pos
+		
+		if _drag_pos_set():
+			#print('in drag_pos_set()')
+			if drag_pos_1.x < drag_pos_0.x:
+				if direction.x != initial_direction.x:
+					switch_direction("x")
+				#direction.x = initial_direction.x
+			elif drag_pos_1.x > drag_pos_0.x:
+				if direction.x != -initial_direction.x:
+					switch_direction("x")
+				#direction.x = -initial_direction.x
+			if drag_pos_1.y < drag_pos_0.y:
+				if direction.y != initial_direction.y:
+					switch_direction("y")
+			elif drag_pos_1.y > drag_pos_0.y:
+				if direction.y != -initial_direction.y:
+					switch_direction("y")
+		else:
+			print('Something dragging offset related')
+		
+		#if _drag_pos_set() && drag_pos_1 > drag_pos_0:
 
+		return
 
+	if !is_paused: 
+		other_window_pos_tofix += direction * speed * delta
+		
+	var max_x = size_screen.x - size_window.x
+	var max_y = size_screen.y - size_window.y
 
-# todo: pet which just follow the cursor
+	if other_window_pos_tofix.x <= 0:
+		other_window_pos_tofix.x = 0
+		if direction.x < 0:
+			#print(1)
+			could_idle(0.6)
+			switch_direction("x")
+			could_idle(0.3)
+	elif other_window_pos_tofix.x >= max_x:
+		other_window_pos_tofix.x = max_x
+		if direction.x > 0:
+			#print(2)
+			could_idle(0.2)
+			switch_direction("x")
+			could_idle(0.4)
+	if other_window_pos_tofix.y <= 0:
+		other_window_pos_tofix.y = 0
+		if direction.y < 0 && can_move_y:
+			#print(3)
+			could_idle(0.23)
+			switch_direction("y")
+			could_idle(0.28)
+	elif other_window_pos_tofix.y >= max_y:
+		other_window_pos_tofix.y = max_y
+		if direction.y > 0 && can_move_y:
+			#print(4)
+			could_idle(0.2)
+			switch_direction("y")
+			could_idle(0.3)
+
+	DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
+
+	if is_idle and !is_paused:
+		_idle(delta)
+
+	if !is_idle and !is_paused and !is_dragging:
+		could_idle(0.00125, 0.5, 2.2)
+		
+func switch_direction(axis = "x"):
+	if axis == "x":
+		#print ('switch X in fn')
+		direction.x *= -1
+		sprite.flip_h = !sprite.flip_h
+	elif axis == "y":
+		#print ('switch Y in fn')
+		if can_move_y:
+			direction.y *= -1
+		else:
+			direction.y = initial_direction.y
+	else:
+		return
+		
+func _idle(delta):
+	idle_time_left -= delta
+	if idle_time_left <= 0:
+		stop_idle()
+		#current_primary_animation = 'walk'
+		#sprite.play(current_primary_animation)
+	return
+
+func idle(duration = 0.0):
+	if !is_paused:
+		is_idle = true
+		speed = 0
+		if duration == 0.0:
+			idle_time_left = randf_range(randf_range(0.7, 1.3), randf_range(2.1, 5.0))
+		else:
+			idle_time_left = duration
+		#current_primary_animation = 'idle'
+		#sprite.play(current_primary_animation)
+		_animation('idle')
+
+func stop_idle():
+	is_idle = false
+	if !is_paused:
+		_animation('walk')
+	speed = default_speed
+	
+func _animation(animation):
+		current_primary_animation = animation
+		sprite.play(current_primary_animation)
+
+func reset_drag():
+	is_dragging = false
+	sprite.play(current_primary_animation)
+	drag_pos_0 = Vector2(0.0, 0.0)
+	drag_pos_1 = Vector2(0.0, 0.0)
+func _drag_pos_set():
+	return(drag_pos_0.x != drag_pos_0.y && (drag_pos_0.x != drag_pos_1.x && drag_pos_0.y != drag_pos_1.y))
+	
+func could_idle(chance: float = 0.05, min = 0.0, max = 0.0) -> bool:
+	if is_idle or is_paused or is_dragging:
+		return false
+
+	if randf() < chance:
+		idle(randf_range(min, max))
+		return true
+ 
+	return false
