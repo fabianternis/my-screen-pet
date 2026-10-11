@@ -9,6 +9,8 @@ var is_paused = false
 var pause_action_time = 7.0
 var pause_time_since_last = 0.0 #not (yet) in use
 var is_following_mouse = false #not in use
+var mouse_position = Vector2()
+var can_move_y = true
 
 var default_speed = 200
 var initial_direction = Vector2(1, 1)
@@ -58,14 +60,15 @@ func _ready():
 	#popup_paused.add_item('continue', 0)
 	#popup_paused.add_item('resume', 0)
 	popup.add_item('change direction', 1)
+	popup.add_item('toggle y-move', 2)
 
 	
 	area.input_event.connect(_on_area_input)
 	popup.id_pressed.connect(_on_item_press)
 	#popup_paused.id_pressed.connect(_on_pause_item_press)
 	
-	#print (size_screen)
-	#print (size_window)
+	##print (size_screen)
+	##print (size_window)
 	
 	other_window_pos_tofix = Vector2(DisplayServer.window_get_position())
 
@@ -98,7 +101,7 @@ func _on_area_input(_viewport, event, _shape_idx):
 func _on_item_press(id):
 	#if menu == 'default':
 	if id == 0:
-	#	print('Hello World!')
+	#	#print('Hello World!')
 		if is_paused:
 			is_paused = false
 			#current_primary_animation = 'walk'
@@ -110,8 +113,17 @@ func _on_item_press(id):
 			#sprite.play(current_primary_animation)
 			_animation('pause')
 	if id == 1:
-		print('HERE 1234')
+		#print('HERE 1234')
 		switch_direction("x")
+	if id == 2:
+		can_move_y = !can_move_y
+		if not can_move_y:
+			direction.y = 0.0
+			
+			other_window_pos_tofix.y = size_screen.y - size_window.y
+			DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
+		else:
+			direction.y = initial_direction.y
 	stop_idle()
 		
 		
@@ -126,7 +138,7 @@ func _process(delta: float):
 		drag_pos_0 = mouse_pos
 		
 		if _drag_pos_set():
-			print('in drag_pos_set()')
+			#print('in drag_pos_set()')
 			if drag_pos_1.x < drag_pos_0.x:
 				if direction.x != initial_direction.x:
 					switch_direction("x")
@@ -157,24 +169,31 @@ func _process(delta: float):
 	if other_window_pos_tofix.x <= 0:
 		other_window_pos_tofix.x = 0
 		if direction.x < 0:
-			print(1)
+			#print(1)
+			could_idle(0.6)
 			switch_direction("x")
+			could_idle(0.3)
 	elif other_window_pos_tofix.x >= max_x:
 		other_window_pos_tofix.x = max_x
 		if direction.x > 0:
-			print(2)
+			#print(2)
+			could_idle(0.2)
 			switch_direction("x")
-
+			could_idle(0.4)
 	if other_window_pos_tofix.y <= 0:
 		other_window_pos_tofix.y = 0
-		if direction.y < 0:
-			print(3)
+		if direction.y < 0 && can_move_y:
+			#print(3)
+			could_idle(0.23)
 			switch_direction("y")
+			could_idle(0.28)
 	elif other_window_pos_tofix.y >= max_y:
 		other_window_pos_tofix.y = max_y
-		if direction.y > 0:
-			print(4)
+		if direction.y > 0 && can_move_y:
+			#print(4)
+			could_idle(0.2)
 			switch_direction("y")
+			could_idle(0.3)
 
 	DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
 
@@ -186,13 +205,15 @@ func _process(delta: float):
 		
 func switch_direction(axis = "x"):
 	if axis == "x":
-		print ('switch X in fn')
+		#print ('switch X in fn')
 		direction.x *= -1
 		sprite.flip_h = !sprite.flip_h
 	elif axis == "y":
-		print ('switch Y in fn')
-	
-		direction.y *= -1
+		#print ('switch Y in fn')
+		if can_move_y:
+			direction.y *= -1
+		else:
+			direction.y = initial_direction.y
 	else:
 		return
 		
