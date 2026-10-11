@@ -11,7 +11,7 @@ var pause_time_since_last = 0.0
 var is_following_mouse = false
 
 var default_speed = 100
-var initial_direction = Vector2(1.3, 0.4)
+var initial_direction = Vector2(2, 1.2)
 #var direction = Vector2(1.3, 0.4)
 var direction = initial_direction
 var size_screen = Vector2()
@@ -24,8 +24,13 @@ var menu = 'default'
 #var default_speed = 300
 var speed = default_speed
 
-var drag_pos_0 = 0.0
-var drag_pos_1 = 0.0
+var drag_pos_0 = Vector2(0.0, 0.0)
+var drag_pos_1 = Vector2(0.0, 0.0)
+var default_drag_pos = Vector2(0.0, 0.0) # i may use this later (when i finally clean-up) - this may never happen
+
+
+var actual_window_pos: Vector2 = Vector2.ZERO
+
 
 #var direction = Vector2(x: 1.15, y: 0.7)
 
@@ -60,6 +65,8 @@ func _ready():
 	
 	#print (size_screen)
 	#print (size_window)
+	
+	actual_window_pos = Vector2(DisplayServer.window_get_position())
 
 
 func _on_area_input(_viewport, event, _shape_idx):
@@ -108,34 +115,68 @@ func _on_item_press(id):
 func _process(delta: float):
 	var window_position = Vector2(DisplayServer.window_get_position())
 	
-	if !is_paused: window_position += direction * speed * delta
+	if !is_paused: 
+		#window_position += direction * speed * delta
+		actual_window_pos += direction.normalized() * speed * delta
 	
 	window_position.x = clamp(window_position.x, 0, size_screen.x - size_window.x)
 	window_position.y = clamp(window_position.y, 0, size_screen.y - size_window.y)
 	DisplayServer.window_set_position (Vector2(window_position))
 	if is_dragging:
 		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
-		var new_window_pos = mouse_pos - drag_offset
-		DisplayServer.window_set_position(Vector2(new_window_pos))
+		#var new_window_pos = mouse_pos - drag_offset
+		#DisplayServer.window_set_position(Vector2(new_window_pos))
+		actual_window_pos = mouse_pos - drag_offset
+		DisplayServer.window_set_position(Vector2i(actual_window_pos))
 		drag_pos_1 = drag_pos_0
-		drag_pos_0 = mouse_pos.x
+		drag_pos_0 = mouse_pos
 		
 		if _drag_pos_set():
-			if drag_pos_1 < drag_pos_0:
+			if drag_pos_1.x < drag_pos_0.x:
 				if direction.x != initial_direction.x:
 					switch_direction("x")
 				#direction.x = initial_direction.x
-			elif drag_pos_1 > drag_pos_0:
+			elif drag_pos_1.x > drag_pos_0.x:
 				if direction.x != -initial_direction.x:
 					switch_direction("x")
 				#direction.x = -initial_direction.x
+			if drag_pos_1.y < drag_pos_0.y:
+				if direction.y != initial_direction.y:
+					switch_direction("y")
+			elif drag_pos_1.y > drag_pos_0.y:
+				if direction.y != -initial_direction.y:
+					switch_direction("y")
 		else:
 			print('Something dragging offset related')
 		
 		#if _drag_pos_set() && drag_pos_1 > drag_pos_0:
 
 		return
-	elif is_idle && !is_paused:
+	var max_x = size_screen.x - size_window.x
+	var max_y = size_screen.y - size_window.y
+
+	# Bounce check with position clamping to prevent stuck toggles
+	if actual_window_pos.x <= 0:
+		actual_window_pos.x = 0
+		if direction.x < 0:
+			switch_direction("x")
+	elif actual_window_pos.x >= max_x:
+		actual_window_pos.x = max_x
+		if direction.x > 0:
+			switch_direction("x")
+
+	if actual_window_pos.y <= 0:
+		actual_window_pos.y = 0
+		if direction.y < 0:
+			switch_direction("y")
+	elif actual_window_pos.y >= max_y:
+		actual_window_pos.y = max_y
+		if direction.y > 0:
+			switch_direction("y")
+
+	DisplayServer.window_set_position(Vector2i(actual_window_pos))
+
+	if is_idle and !is_paused:
 		_idle(delta)
 		
 	if window_position.x <= 0 or window_position.x >= size_screen.x - size_window.x:
@@ -181,10 +222,10 @@ func _animation(animation):
 func reset_drag():
 	is_dragging = false
 	sprite.play(current_primary_animation)
-	drag_pos_0 = 0.0
-	drag_pos_1 = 0.0
+	drag_pos_0 = Vector2(0.0, 0.0)
+	drag_pos_1 = Vector2(0.0, 0.0)
 func _drag_pos_set():
-	return(drag_pos_0 != 0.0 && drag_pos_1 != 0.0)
+	return(drag_pos_0.x != drag_pos_0.y && (drag_pos_0.x != drag_pos_1.x && drag_pos_0.y != drag_pos_1.y))
 	
 #func could_idle():
 	
