@@ -107,8 +107,8 @@ var menu = 'default'
 #var default_speed = 300
 var speed = default_speed
 
-#var drag_pos_0 = 0.0
-#var drag_pos_1 = 0.0
+var drag_pos_0 = 0.0
+var drag_pos_1 = 0.0
 
 #var direction = Vector2(x: 1.15, y: 0.7)
 
@@ -150,7 +150,7 @@ func _on_area_input(_viewport, event, _shape_idx):
 			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 			var window_pos = Vector2(DisplayServer.window_get_position())
 			drag_offset = mouse_pos - window_pos
-			sprite.play('drag') # dot _animation() for a reason: should remember the animation pre-drag
+			if !is_paused: sprite.play('drag') # dot _animation() for a reason: should remember the animation pre-drag
 		else:
 			reset_drag()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -162,6 +162,8 @@ func _on_area_input(_viewport, event, _shape_idx):
 			#else:
 				#menu = 'default'
 			#	popup.add_item('pause', 0)
+			if !is_paused:
+				idle(3)
 			popup.popup_on_parent(Rect2i(Vector2i(event.position), Vector2i.ZERO))
 			
 			
@@ -196,13 +198,18 @@ func _process(delta: float):
 		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 		var new_window_pos = mouse_pos - drag_offset
 		DisplayServer.window_set_position(Vector2(new_window_pos))
-		#drag_pos_1 = drag_pos_0
-		#drag_pos_0 = mouse_pos.x
+		drag_pos_1 = drag_pos_0
+		drag_pos_0 = mouse_pos.x
 		
-		if drag_offset.x > 0:
-			direction.x = initial_direction.x
-		elif drag_offset.x < 0:
-			direction.x = -initial_direction.x
+		if _drag_pos_set():
+			if drag_pos_1 < drag_pos_0:
+				if direction.x != initial_direction.x:
+					switch_direction("x")
+				#direction.x = initial_direction.x
+			elif drag_pos_1 > drag_pos_0:
+				if direction.x != -initial_direction.x:
+					switch_direction("x")
+				#direction.x = -initial_direction.x
 		else:
 			print('Something dragging offset related')
 		
@@ -236,9 +243,12 @@ func _idle(delta):
 		_animation('walk')
 	return
 
-func idle():
+func idle(duration = 0.0):
 	is_idle = true
-	idle_time_left = randf_range(randf_range(0.7, 1.3), randf_range(2.1, 5.0))
+	if duration == 0.0:
+		idle_time_left = randf_range(randf_range(0.7, 1.3), randf_range(2.1, 5.0))
+	else:
+		idle_time_left = duration
 	#current_primary_animation = 'idle'
 	#sprite.play(current_primary_animation)
 	_animation('idle')
@@ -250,10 +260,10 @@ func _animation(animation):
 func reset_drag():
 	is_dragging = false
 	sprite.play(current_primary_animation)
-#	drag_pos_0 = 0.0
-#	drag_pos_1 = 0.0
-#func _drag_pos_set():
-#	return(drag_pos_0 != 0.0 && drag_pos_1 != 0.0)
+	drag_pos_0 = 0.0
+	drag_pos_1 = 0.0
+func _drag_pos_set():
+	return(drag_pos_0 != 0.0 && drag_pos_1 != 0.0)
 
 
 
