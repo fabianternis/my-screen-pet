@@ -10,8 +10,8 @@ var pause_action_time = 7.0
 var pause_time_since_last = 0.0 #not (yet) in use
 var is_following_mouse = false #not in use
 
-var default_speed = 100
-var initial_direction = Vector2(2, 1.2)
+var default_speed = 200
+var initial_direction = Vector2(1, 1)
 #var direction = Vector2(1.3, 0.4)
 var direction = initial_direction
 var size_screen = Vector2()
@@ -116,6 +116,7 @@ func _on_item_press(id):
 		
 		
 func _process(delta: float):
+	#print(direction)
 	var window_position = Vector2(DisplayServer.window_get_position())
 	
 	if !is_paused: 
@@ -164,7 +165,9 @@ func _process(delta: float):
 	if other_window_pos_tofix.x <= 0:
 		if direction.x < 0:
 			print(1)
-			switch_direction("x")
+			#switch_direction("x")
+			direction = initial_direction
+
 	elif other_window_pos_tofix.x >= max_x:
 		if direction.x > 0:
 			print(2)
@@ -196,12 +199,12 @@ func _process(delta: float):
 func switch_direction(axis = "x"):
 	if axis == "x":
 		print ('switch X in fn')
-		#direction.x *= -1
+		direction.x *= -1
 		sprite.flip_h = !sprite.flip_h
 	elif axis == "y":
 		print ('switch Y in fn')
 	
-		#direction.y *= -1
+		direction.y *= -1
 	else:
 		return
 		
