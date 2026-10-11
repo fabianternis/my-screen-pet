@@ -116,16 +116,6 @@ func _on_item_press(id):
 		
 		
 func _process(delta: float):
-	#print(direction)
-	var window_position = Vector2(DisplayServer.window_get_position())
-	
-	if !is_paused: 
-		#window_position += direction * speed * delta
-		other_window_pos_tofix += direction * speed * delta
-	
-	window_position.x = clamp(window_position.x, 0, size_screen.x - size_window.x)
-	window_position.y = clamp(window_position.y, 0, size_screen.y - size_window.y)
-	DisplayServer.window_set_position (Vector2(window_position))
 	if is_dragging:
 		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 		#var new_window_pos = mouse_pos - drag_offset
@@ -157,28 +147,31 @@ func _process(delta: float):
 		#if _drag_pos_set() && drag_pos_1 > drag_pos_0:
 
 		return
-		
+
+	if !is_paused: 
+		other_window_pos_tofix += direction * speed * delta
 		
 	var max_x = size_screen.x - size_window.x
 	var max_y = size_screen.y - size_window.y
 
 	if other_window_pos_tofix.x <= 0:
+		other_window_pos_tofix.x = 0
 		if direction.x < 0:
 			print(1)
-			#switch_direction("x")
-			direction = initial_direction
-
+			switch_direction("x")
 	elif other_window_pos_tofix.x >= max_x:
+		other_window_pos_tofix.x = max_x
 		if direction.x > 0:
 			print(2)
-			#switch_direction("x")
-			direction = -initial_direction
+			switch_direction("x")
 
 	if other_window_pos_tofix.y <= 0:
+		other_window_pos_tofix.y = 0
 		if direction.y < 0:
 			print(3)
 			switch_direction("y")
 	elif other_window_pos_tofix.y >= max_y:
+		other_window_pos_tofix.y = max_y
 		if direction.y > 0:
 			print(4)
 			switch_direction("y")
@@ -187,14 +180,9 @@ func _process(delta: float):
 
 	if is_idle and !is_paused:
 		_idle(delta)
-		
-	if window_position.x <= 0 or window_position.x >= size_screen.x - size_window.x:
-		direction.x *= -1
-	if window_position.y <= 0 or window_position.y >= size_screen.y - size_window.y:
-		direction.y *= -1
 
 	if !is_idle and !is_paused and !is_dragging:
-		could_idle(0.00125, 5, 7)
+		could_idle(0.00125, 0.5, 2.2)
 		
 func switch_direction(axis = "x"):
 	if axis == "x":
