@@ -95,7 +95,9 @@ var pause_time_since_last = 0.0
 var is_following_mouse = false
 
 var default_speed = 100
-var direction = Vector2(1.3, 0.4)
+var initial_direction = Vector2(1.3, 0.4)
+#var direction = Vector2(1.3, 0.4)
+var direction = initial_direction
 var size_screen = Vector2()
 var size_window = Vector2(DisplayServer.window_get_size())
 
@@ -104,6 +106,9 @@ var menu = 'default'
 
 #var default_speed = 300
 var speed = default_speed
+
+#var drag_pos_0 = 0.0
+#var drag_pos_1 = 0.0
 
 #var direction = Vector2(x: 1.15, y: 0.7)
 
@@ -145,10 +150,9 @@ func _on_area_input(_viewport, event, _shape_idx):
 			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 			var window_pos = Vector2(DisplayServer.window_get_position())
 			drag_offset = mouse_pos - window_pos
-			sprite.play('drag')
+			sprite.play('drag') # dot _animation() for a reason: should remember the animation pre-drag
 		else:
-			is_dragging = false
-			sprite.play(current_primary_animation)
+			reset_drag()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if event.pressed:
 			#if is_paused:
@@ -168,19 +172,22 @@ func _on_item_press(id):
 	#	print('Hello World!')
 		if is_paused:
 			is_paused = false
-			current_primary_animation = 'walk'
-			sprite.play(current_primary_animation)
+			#current_primary_animation = 'walk'
+			#sprite.play(current_primary_animation)
+			_animation('walk')
 		else:
 			is_paused = true
-			current_primary_animation = 'pause'
-			sprite.play(current_primary_animation)
+			#current_primary_animation = 'pause'
+			#sprite.play(current_primary_animation)
+			_animation('pause')
 	if id == 1:
 		switch_direction()
 		
 		
 func _process(delta: float):
 	var window_position = Vector2(DisplayServer.window_get_position())
-	window_position += direction * speed * delta
+	
+	if !is_paused: window_position += direction * speed * delta
 	
 	window_position.x = clamp(window_position.x, 0, size_screen.x - size_window.x)
 	window_position.y = clamp(window_position.y, 0, size_screen.y - size_window.y)
@@ -189,23 +196,65 @@ func _process(delta: float):
 		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 		var new_window_pos = mouse_pos - drag_offset
 		DisplayServer.window_set_position(Vector2(new_window_pos))
+		#drag_pos_1 = drag_pos_0
+		#drag_pos_0 = mouse_pos.x
+		
+		if drag_offset.x > 0:
+			direction.x = initial_direction.x
+		elif drag_offset.x < 0:
+			direction.x = -initial_direction.x
+		else:
+			print('Something dragging offset related')
+		
+		#if _drag_pos_set() && drag_pos_1 > drag_pos_0:
+
 		return
-	if is_idle:
-		idle_time_left -= delta
-		if idle_time_left <= 0:
-			is_idle = false
-			speed = default_speed
-			sprite.play('walk')
+	elif is_idle && !is_paused:
+		_idle(delta)
+		
+	if window_position.x <= 0 or window_position.x >= size_screen.x - size_window.x:
+		switch_direction("x")
+	if window_position.y <= 0 or window_position.y >= size_screen.y - size_window.y:
+		switch_direction("y")
+
+
+func switch_direction(axis = "x"):
+	if axis == "x":
+		direction.x *= -1
+		sprite.flip_h = !sprite.flip_h
+	elif axis == "y":
+		direction.y *= -1
+	else:
 		return
 		
+func _idle(delta):
+	idle_time_left -= delta
+	if idle_time_left <= 0:
+		is_idle = false
+		#current_primary_animation = 'walk'
+		#sprite.play(current_primary_animation)
+		_animation('walk')
+	return
+
+func idle():
+	is_idle = true
+	idle_time_left = randf_range(randf_range(0.7, 1.3), randf_range(2.1, 5.0))
+	#current_primary_animation = 'idle'
+	#sprite.play(current_primary_animation)
+	_animation('idle')
 	
-	if window_position.x <= 0 or window_position.x >= size_screen.x - size_window.x:
-		switch_direction()
-	if window_position.y <= 0 or window_position.y >= size_screen.y - size_window.y:
-		direction.y *= -1
+func _animation(animation):
+		current_primary_animation = animation
+		sprite.play(current_primary_animation)
+
+func reset_drag():
+	is_dragging = false
+	sprite.play(current_primary_animation)
+#	drag_pos_0 = 0.0
+#	drag_pos_1 = 0.0
+#func _drag_pos_set():
+#	return(drag_pos_0 != 0.0 && drag_pos_1 != 0.0)
 
 
-func switch_direction():
-	direction.x *= -1
-	sprite.flip_h = !sprite.flip_h
+
 #"""
