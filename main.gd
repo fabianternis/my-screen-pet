@@ -34,6 +34,8 @@ var default_drag_pos = Vector2(0.0, 0.0) # i may use this later (when i finally 
 var other_window_pos_tofix: Vector2 = Vector2.ZERO
 var can_idle = true # not used yet
 
+var pet_pos = Vector2()
+var mouse_pos = Vector2() # used by dragging and mouse-following
 
 #var direction = Vector2(x: 1.15, y: 0.7)
 
@@ -61,6 +63,7 @@ func _ready():
 	#popup_paused.add_item('resume', 0)
 	popup.add_item('change direction', 1)
 	popup.add_item('toggle y-move', 2)
+	popup.add_item('(un) follow mouse', 3)
 
 	
 	area.input_event.connect(_on_area_input)
@@ -77,7 +80,6 @@ func _on_area_input(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			is_dragging = true
-			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 			var window_pos = Vector2(DisplayServer.window_get_position())
 			drag_offset = mouse_pos - window_pos
 			if !is_paused: sprite.play('drag') # dot _animation() for a reason: should remember the animation pre-drag
@@ -117,90 +119,120 @@ func _on_item_press(id):
 		switch_direction("x")
 	if id == 2:
 		can_move_y = !can_move_y
-		if not can_move_y:
+		if !can_move_y:
 			direction.y = 0.0
 			
 			other_window_pos_tofix.y = size_screen.y - size_window.y
 			DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
 		else:
 			direction.y = initial_direction.y
+	if id == 3:
+		is_following_mouse = !is_following_mouse
+		if !is_following_mouse:
+			direction = initial_direction
+			sprite.flip_h = direction.x < 0
 	stop_idle()
 		
 		
 func _process(delta: float):
+	mouse_pos = Vector2(DisplayServer.mouse_get_position())
+	
 	if is_dragging:
-		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
-		#var new_window_pos = mouse_pos - drag_offset
-		#DisplayServer.window_set_position(Vector2(new_window_pos))
 		other_window_pos_tofix = mouse_pos - drag_offset
 		DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
 		drag_pos_1 = drag_pos_0
 		drag_pos_0 = mouse_pos
 		
 		if _drag_pos_set():
-			#print('in drag_pos_set()')
 			if drag_pos_1.x < drag_pos_0.x:
 				if direction.x != initial_direction.x:
 					switch_direction("x")
-				#direction.x = initial_direction.x
 			elif drag_pos_1.x > drag_pos_0.x:
 				if direction.x != -initial_direction.x:
 					switch_direction("x")
-				#direction.x = -initial_direction.x
 			if drag_pos_1.y < drag_pos_0.y:
 				if direction.y != initial_direction.y:
 					switch_direction("y")
 			elif drag_pos_1.y > drag_pos_0.y:
 				if direction.y != -initial_direction.y:
 					switch_direction("y")
-		else:
-			print('Something dragging offset related')
-		
-		#if _drag_pos_set() && drag_pos_1 > drag_pos_0:
-
 		return
 
-	if !is_paused: 
-		other_window_pos_tofix += direction * speed * delta
+	if is_following_mouse and !is_paused:
+		pet_pos = other_window_pos_tofix + (size_window * 0.5)
+		var to_mouse = mouse_pos - pet_pos
+		var distance = to_mouse.length()
 		
+		var stop_distance = 12.0
+		
+		if distance > stop_distance:
+			if is_idle:
+				stop_idle()
+			
+			var target_dir = to_mouse / distance
+			
+			if !can_move_y:
+				target_dir.y = 0.0
+				target_dir = target_dir.normalized()
+			
+			direction = target_dir
+			
+			if direction.x > 0.05 and sprite.flip_h:
+				sprite.flip_h = false
+			elif direction.x < -0.05 and !sprite.flip_h:
+				sprite.flip_h = true
+		else:
+			if !is_idle:
+				idle(0.2)
+			direction = Vector2.ZERO
+
+	if !is_paused and !is_idle:
+		other_window_pos_tofix += direction * speed * delta
+
 	var max_x = size_screen.x - size_window.x
 	var max_y = size_screen.y - size_window.y
 
 	if other_window_pos_tofix.x <= 0:
 		other_window_pos_tofix.x = 0
 		if direction.x < 0:
-			#print(1)
-			could_idle(0.6)
-			switch_direction("x")
-			could_idle(0.3)
+			if !is_following_mouse:
+				if could_idle(0.6):
+					could_change_direction(0.3, 0.4)
+				switch_direction("x")
+				could_idle(0.3)
 	elif other_window_pos_tofix.x >= max_x:
 		other_window_pos_tofix.x = max_x
 		if direction.x > 0:
-			#print(2)
-			could_idle(0.2)
-			switch_direction("x")
-			could_idle(0.4)
+			if !is_following_mouse:
+				could_idle(0.2)
+				switch_direction("x")
+				if could_idle(0.4):
+					could_change_direction()
+					
 	if other_window_pos_tofix.y <= 0:
 		other_window_pos_tofix.y = 0
-		if direction.y < 0 && can_move_y:
-			#print(3)
-			could_idle(0.23)
-			switch_direction("y")
-			could_idle(0.28)
+		if direction.y < 0 and can_move_y:
+			if !is_following_mouse:
+				if could_idle(0.23):
+					could_change_direction(0.2, 0.4)
+				switch_direction("y")
+				if could_idle(0.28):
+					could_change_direction(0.5, 0.1)
 	elif other_window_pos_tofix.y >= max_y:
 		other_window_pos_tofix.y = max_y
-		if direction.y > 0 && can_move_y:
-			#print(4)
-			could_idle(0.2)
-			switch_direction("y")
-			could_idle(0.3)
+		if direction.y > 0 and can_move_y:
+			if !is_following_mouse:
+				if could_idle(0.2):
+					could_change_direction(0.1, 0.075)
+				switch_direction("y")
+				could_idle(0.3)
 
 	DisplayServer.window_set_position(Vector2i(other_window_pos_tofix))
 
 	if is_idle and !is_paused:
 		_idle(delta)
 
-	if !is_idle and !is_paused and !is_dragging:
+	if !is_idle and !is_paused and !is_dragging and !is_following_mouse:
 		could_idle(0.00125, 0.5, 2.2)
 		
 func switch_direction(axis = "x"):
@@ -221,6 +253,7 @@ func _idle(delta):
 	idle_time_left -= delta
 	if idle_time_left <= 0:
 		stop_idle()
+		
 		#current_primary_animation = 'walk'
 		#sprite.play(current_primary_animation)
 	return
@@ -262,5 +295,11 @@ func could_idle(chance: float = 0.05, min = 0.0, max = 0.0) -> bool:
 	if randf() < chance:
 		idle(randf_range(min, max))
 		return true
- 
 	return false
+
+
+func could_change_direction(x = 0.25, y = 0.2):
+	if randf() < x:
+		switch_direction("x")
+	if randf() < y and can_move_y:
+		switch_direction("y")
