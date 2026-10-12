@@ -15,9 +15,10 @@ https://fabianternis.itch.io/my-screen-pet
 ## Made with
 - Godot Engine
 - GDScript
+- [GIMP](https://www.gimp.org/) (images)
 
 ## Design
-- Hand-drawn outline, filled in gimp (does not look pretty but i like it)
+- Hand-drawn outline, filled in [GIMP](https://www.gimp.org/) (does not look pretty but i like it)
 - **8** frames
 <img width="250" height="250" alt="idle_0" src="https://github.com/user-attachments/assets/e010008d-e49e-4eca-91e9-5b562b65e368" />
 <img width="250" height="250" alt="up_front" src="https://github.com/user-attachments/assets/56003c5e-64b1-441c-b55d-60f1adfa4de2" />
