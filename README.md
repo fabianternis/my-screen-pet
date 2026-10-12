@@ -1,10 +1,13 @@
 # my-screen-pet (Just a little on-screen pet)
+<!--->
+![img](https://hackatime.hackclub.com/api/v1/badge/U0B8JTZDTKQ/fabianternis/my-screen-pet)
 
 ## Features
 - walk across your entire screen / just the bottom (toggle)
 - idle
 - pause (toggle)
 - draggable (will also change the movement-direction)
+- follow mouse (bypasses the "y-movement restriction")
 
 ## Download
 https://fabianternis.itch.io/my-screen-pet
